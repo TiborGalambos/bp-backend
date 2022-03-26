@@ -17,9 +17,10 @@ from rest_framework.response import Response
 from knox.models import AuthToken
 
 
-class ViewUser(generics.RetrieveAPIView):
+class ViewUsers(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [permissions.IsAdminUser]
 
     def get(self, request, *args, **kwargs):
         users_to_show = User.objects.all()
