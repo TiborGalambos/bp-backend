@@ -14,7 +14,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from .models import *
-from .views import ViewUsers, RegisterUser, LoginUser, CreateNewNormalObservation, WhoAmI
+from .views import ViewUsers, RegisterUser, LoginUser, CreateNewNormalObservation, WhoAmI, CreateNewSimpleObservation, \
+    GetRecentNormalObservations
 from django.contrib import admin
 from django.urls import path, include
 from knox import views as knox_views
@@ -26,9 +27,11 @@ urlpatterns = [
     path('users/', ViewUsers.as_view()),
     path('register/', RegisterUser.as_view()),
     path('login/', LoginUser.as_view()),
-    path('createobservation/', CreateNewNormalObservation.as_view()),
+    path('observation/normal/', CreateNewNormalObservation.as_view()),
+    path('observation/simple/', CreateNewSimpleObservation.as_view()),
     path('whoami/', WhoAmI.as_view()),
-    path('logout/', knox_views.LogoutView.as_view())
+    path('logout/', knox_views.LogoutView.as_view()),
+    path('observation/recent/', GetRecentNormalObservations.as_view()),
     # path('register/', Register.as_view(), name='register'), # register new user
     # path('user/login/', LoginAPI.as_view(), name='login'), # login user
     # #path('user/logout/', knox_views.LogoutView.as_view(), name='logout'), # logout user

@@ -1,0 +1,18 @@
+asgiref==3.2.10
+# cffi==1.14.0
+cryptography
+Django
+django-filter==2.3.0
+django-rest-knox==4.2.0
+djangorestframework
+importlib-metadata==1.7.0
+pycparser==2.20
+pytz==2020.1
+six==1.15.0
+sqlparse==0.3.1
+zipp==3.1.0
+whitenoise
+psycopg2-binary
+psycopg2
+knox
+Pillow

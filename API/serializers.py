@@ -39,7 +39,6 @@ class LoginSerializer(serializers.Serializer):
         return user
 
 
-
 # Adding Normal Observations
 class NormalObservationSerializer(serializers.ModelSerializer):
     class Meta:

@@ -1,4 +1,3 @@
-import knox.knox
 from django.shortcuts import render
 from django.http import HttpResponse
 from knox.serializers import UserSerializer
@@ -74,6 +73,7 @@ class WhoAmI(generics.RetrieveAPIView):
 
 
 class CreateNewNormalObservation(generics.CreateAPIView):
+
     serializer_class = NormalObservationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -82,13 +82,13 @@ class CreateNewNormalObservation(generics.CreateAPIView):
 
         observation_data = request.POST.copy()
         try:
-            photo = request.FILES['photo']
+            photo = request.FILES['bird_photo']
         except:
             photo = None
 
-        observation_data['author'] = user.id
-        observation_data['author_name'] = user.username
-        observation_data['photo'] = photo
+        observation_data['obs_author'] = user.id
+        observation_data['obs_author_name'] = user.username
+        observation_data['bird_photo'] = photo
 
         serializer = self.get_serializer(data=observation_data)
         serializer.is_valid(raise_exception=True)
@@ -96,3 +96,40 @@ class CreateNewNormalObservation(generics.CreateAPIView):
         item = serializer.save()
 
         return Response(serializer.data)
+
+
+class CreateNewSimpleObservation(generics.CreateAPIView):
+
+    serializer_class = SimpleObservationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+
+        observation_data = request.POST.copy()
+        try:
+            photo = request.FILES['bird_photo']
+        except:
+            photo = None
+
+        observation_data['obs_author'] = user.id
+        observation_data['obs_author_name'] = user.username
+        observation_data['bird_photo'] = photo
+
+        serializer = self.get_serializer(data=observation_data)
+        serializer.is_valid(raise_exception=True)
+
+        item = serializer.save()
+
+        return Response(serializer.data)
+
+
+class GetRecentNormalObservations(generics.RetrieveAPIView):
+    serializer_class = NormalObservationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        observations = ObservationNormal.objects.all().order_by('-id')[:3]
+        serializer = NormalObservationSerializer(observations, many=True)
+
+        return Response({'obs': serializer.data})
