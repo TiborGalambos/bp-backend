@@ -14,8 +14,11 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from .models import *
-from .views import ViewUsers, RegisterUser, LoginUser, CreateNewNormalObservation, WhoAmI, CreateNewSimpleObservation, \
-    GetRecentNormalObservations
+from .views import CreateNewNormalObservation, CreateNewSimpleObservation, \
+    GetRecentConfirmedObservationsWithComments, GetAllPersonalObservationsPagination, CreateComment, \
+    GetAllConfirmedObsWithCommentsPagination, GetAllUnconfirmedObservationsWithComments, UpdateUnconfirmedObservation
+from .stats_views.stats_views import GetGlobalStatisticsMainNumbers, GetGlobalSumOfBirds, GetPersonalSumOfBirds
+from .user_views.user_views import ViewUsers, RegisterUser, LoginUser, WhoAmI, AmIAdmin
 from django.contrib import admin
 from django.urls import path, include
 from knox import views as knox_views
@@ -27,14 +30,31 @@ urlpatterns = [
     path('users/', ViewUsers.as_view()),
     path('register/', RegisterUser.as_view()),
     path('login/', LoginUser.as_view()),
-    path('observation/normal/', CreateNewNormalObservation.as_view()),
-    path('observation/simple/', CreateNewSimpleObservation.as_view()),
     path('whoami/', WhoAmI.as_view()),
     path('logout/', knox_views.LogoutView.as_view()),
-    path('observation/recent/', GetRecentNormalObservations.as_view()),
-    # path('register/', Register.as_view(), name='register'), # register new user
-    # path('user/login/', LoginAPI.as_view(), name='login'), # login user
-    # #path('user/logout/', knox_views.LogoutView.as_view(), name='logout'), # logout user
-    # path('api/user/', UserAPI.as_view(), name='user'), # get info about user?
-    # path('add_observation/' ObservationNormal)
+    path('amiadmin/', AmIAdmin.as_view()),
+
+    path('observation/normal/', CreateNewNormalObservation.as_view()),
+    path('observation/simple/', CreateNewSimpleObservation.as_view()),
+
+
+    path('observation/recent/', GetRecentConfirmedObservationsWithComments.as_view()),
+    path('observation/unconfirmed/<int:page_number>', GetAllUnconfirmedObservationsWithComments.as_view(), name='page_number'),
+    path('observation/unconfirmed/update/<int:obs_number>', UpdateUnconfirmedObservation.as_view(), name='obs_number'),
+    path('observation/unconfirmed/', GetAllUnconfirmedObservationsWithComments.as_view()),
+
+
+    path('observation/user/<int:page_number>', GetAllPersonalObservationsPagination.as_view(), name='page_number'),
+    path('observation/user/', GetAllPersonalObservationsPagination.as_view()),
+
+
+    path('observation/newcomment/', CreateComment.as_view()),
+    path('observation/comments/<int:page_number>', GetAllConfirmedObsWithCommentsPagination.as_view(), name='page_number'),
+    path('observation/comments/', GetAllConfirmedObsWithCommentsPagination.as_view()),
+
+
+    path('stats/sum/', GetGlobalStatisticsMainNumbers.as_view()),
+    path('stats/birds/', GetGlobalSumOfBirds.as_view()),
+    path('stats/sum/personal/', GetPersonalSumOfBirds.as_view())
+
 ]

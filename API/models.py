@@ -13,36 +13,56 @@ from django.views.decorators.debug import sensitive_post_parameters
 from rest_framework.views import APIView
 
 
-# Observation data - Normal
-class ObservationNormal(models.Model):
 
-    obs_author = models.ForeignKey(User, on_delete=models.CASCADE)
-    obs_author_name = models.CharField(max_length=150, default="username")
+
+
+# Observation data
+class Observation(models.Model):
+    author_id = models.ForeignKey(User, related_name='obs_author', on_delete=models.CASCADE)
+
     obs_x_coords = models.FloatField(default=0)
     obs_y_coords = models.FloatField(default=0)
+
+    obs_place = models.CharField(max_length=200, default="Nowhere")
+
+    obs_is_confirmed = models.BooleanField(null=True, default=True)
+
     bird_name = models.CharField(max_length=150)
     bird_count = models.IntegerField(default=1)
     obs_time = models.DateTimeField(default=datetime.now(tz=None))
     bird_photo = models.ImageField(null=True, blank=True, upload_to="images/")
 
-    def __str__(self):
-        return self.name
+    bird_size = models.CharField(max_length=70, default=None, null=True)
+    obs_description = models.CharField(max_length=300, default=None, null=True)
+    obs_is_simple = models.BooleanField(null=True, default=False)
+
+    def __int__(self):
+        return self.bird_name
 
 
-# Observation data - Simple
-class ObservationSimple(models.Model):
-
-    obs_author = models.ForeignKey(User, on_delete=models.CASCADE)
-    obs_author_name = models.CharField(max_length=150, default="username")
-    obs_x_coords = models.FloatField(default=0)
-    obs_y_coords = models.FloatField(default=0)
-    bird_size = models.CharField(max_length=70)
-    # bird_family = models.CharField(max_length=70) ???
-    # bird_color = models.CharField(max_length=70) ???
-    bird_count = models.IntegerField(default=1)
-    obs_description = models.CharField(max_length=300, default=None, null=True,)
-    obs_time = models.DateTimeField(default=datetime.now(tz=None))
-    bird_photo = models.ImageField(null=True, blank=True, upload_to="images/")
+class Comment(models.Model):
+    author_id = models.ForeignKey(User, related_name='com_author', on_delete=models.CASCADE)
+    observation_id = models.ForeignKey(Observation, related_name='comments', on_delete=models.CASCADE)
+    comment = models.CharField(max_length=500, default=None, null=True)
 
     def __str__(self):
-        return self.name
+        return self.comment
+
+
+# model for personal observation count
+class PersonalStats(models.Model):
+    author_id = models.ForeignKey(User, related_name='stat_author', on_delete=models.CASCADE)
+    obs_count = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.obs_count
+
+
+# model for count of all birds
+class BirdCounter(models.Model):
+    bird_name = models.CharField(max_length=500, default=None, null=True)
+    bird_count = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.bird_name
+

@@ -2,16 +2,13 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import fields
+from knox.serializers import UserSerializer
 from rest_framework import serializers
 
 # User Serializer
-from API.models import ObservationNormal, ObservationSimple
+from rest_framework.relations import *
 
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('id', 'username')
+from API.models import Observation, Comment, PersonalStats, BirdCounter
 
 
 # Register Serializer
@@ -40,16 +37,53 @@ class LoginSerializer(serializers.Serializer):
 
 
 # Adding Normal Observations
-class NormalObservationSerializer(serializers.ModelSerializer):
+class ObservationSerializer(serializers.ModelSerializer):
+
+    def get_username(self, obj):
+        return obj.author_id.username
+
+    obs_author = serializers.SerializerMethodField("get_username")
+
     class Meta:
-        model = ObservationNormal
+        model = Observation
         fields = '__all__'
 
 
-# Adding Simple Observations
-class SimpleObservationSerializer(serializers.ModelSerializer):
+
+class CommentSerializer(serializers.ModelSerializer):
+
+    def get_username(self, obj):
+        return obj.author_id.username
+
+    com_author = serializers.SerializerMethodField("get_username")
+
     class Meta:
-        model = ObservationSimple
+        model = Comment
+        fields = '__all__'
+
+class ObservationAndCommentSerializer(serializers.ModelSerializer):
+
+    def get_username(self, obj):
+        return obj.author_id.username
+
+    obs_author = serializers.SerializerMethodField("get_username")
+
+    comments = CommentSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Observation
         fields = '__all__'
 
 
+class PersonalStatsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PersonalStats
+        fields = '__all__'
+
+
+class BirdCounterSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = BirdCounter
+        fields = '__all__'

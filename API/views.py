@@ -1,80 +1,40 @@
-from django.shortcuts import render
-from django.http import HttpResponse
-from knox.serializers import UserSerializer
-from rest_framework.permissions import IsAdminUser
+from django.core.paginator import Paginator
+
 from API.serializers import *
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from knox.auth import TokenAuthentication
-from django.contrib.auth import authenticate
-from django.contrib.auth import login
-from rest_framework.authtoken.serializers import AuthTokenSerializer
-from knox.views import LoginView as KnoxLoginView
-from django.contrib import auth
-from rest_framework import generics, permissions, serializers
+from rest_framework import generics, permissions
 from rest_framework.response import Response
-from knox.models import AuthToken
 
 
-class ViewUsers(generics.RetrieveAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAdminUser]
-
-    def get(self, request, *args, **kwargs):
-        users_to_show = User.objects.all()
-
-        serializer = UserSerializer(users_to_show, many=True)
-        return Response(serializer.data)
-
-
-class RegisterUser(generics.CreateAPIView):
-
-    def post(self, request, *args, **kwargs):
-        serializer = RegisterSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        user = User.objects.create_user(username=request.POST['username'])
-        user.set_password(request.POST['password'])
-
-        user.save()
-        _, token = AuthToken.objects.create(user)
-
-        return Response(
-            {"user": user.username,
-             "token": token})
+def update_global_stats(observation_data):
+    exact_bird = BirdCounter.objects.filter(bird_name__contains=observation_data['bird_name'])
+    exact_bird_first = exact_bird.first()
+    print(exact_bird)
+    if exact_bird.count() == 0:
+        print("none")
+        new_data = BirdCounter(bird_name=observation_data['bird_name'], bird_count=observation_data['bird_count'])
+        new_data.save()
+    else:
+        print("something")
+        new_count = int(getattr(exact_bird_first, 'bird_count')) + int(observation_data['bird_count'])
+        exact_bird.update(bird_count=new_count)
 
 
-class LoginUser(generics.CreateAPIView):
-    permission_classes = [permissions.AllowAny]
+def update_personal_stats(observation_data, user_id):
+    exact_stat = PersonalStats.objects.filter(author_id__exact=observation_data['author_id'])
+    exact_stat_first = exact_stat.first()
 
-    def post(self, request, *args, **kwargs):
-        serializer = AuthTokenSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
-        _, token = AuthToken.objects.create(user)
-
-        return Response(
-            {
-                "user": user.username,
-                "token": token
-            }
-        )
-
-
-class WhoAmI(generics.RetrieveAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = UserSerializer
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        print(request.user.is_superuser)
-        return Response({'name': user.username})
+    if exact_stat.count() == 0:
+        print("none")
+        new_data = PersonalStats(author_id=user_id, obs_count=observation_data['bird_count'])
+        new_data.save()
+    else:
+        print("something")
+        new_count = int(getattr(exact_stat_first, 'obs_count')) + int(observation_data['bird_count'])
+        exact_stat.update(obs_count=new_count)
 
 
 class CreateNewNormalObservation(generics.CreateAPIView):
-
-    serializer_class = NormalObservationSerializer
+    serializer_class = ObservationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
@@ -86,21 +46,26 @@ class CreateNewNormalObservation(generics.CreateAPIView):
         except:
             photo = None
 
-        observation_data['obs_author'] = user.id
-        observation_data['obs_author_name'] = user.username
+        print(type(observation_data))
+
+        observation_data['author_id'] = user.id
+        observation_data['obs_is_simple'] = False
         observation_data['bird_photo'] = photo
 
         serializer = self.get_serializer(data=observation_data)
         serializer.is_valid(raise_exception=True)
 
         item = serializer.save()
+
+        update_global_stats(observation_data)
+        update_personal_stats(observation_data, user)
+        request.FILES['bird_photo'].close()
 
         return Response(serializer.data)
 
 
 class CreateNewSimpleObservation(generics.CreateAPIView):
-
-    serializer_class = SimpleObservationSerializer
+    serializer_class = ObservationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
@@ -112,9 +77,12 @@ class CreateNewSimpleObservation(generics.CreateAPIView):
         except:
             photo = None
 
-        observation_data['obs_author'] = user.id
+        observation_data['author_id'] = user.id
         observation_data['obs_author_name'] = user.username
+        observation_data['obs_is_confirmed'] = False
         observation_data['bird_photo'] = photo
+
+        observation_data['obs_is_simple'] = True
 
         serializer = self.get_serializer(data=observation_data)
         serializer.is_valid(raise_exception=True)
@@ -124,12 +92,159 @@ class CreateNewSimpleObservation(generics.CreateAPIView):
         return Response(serializer.data)
 
 
-class GetRecentNormalObservations(generics.RetrieveAPIView):
-    serializer_class = NormalObservationSerializer
+class CreateComment(generics.CreateAPIView):
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+
+        observation_data = request.POST.copy()
+
+        observation_data['author_id'] = user.id
+
+        serializer = self.get_serializer(data=observation_data)
+        serializer.is_valid(raise_exception=True)
+
+        item = serializer.save()
+
+        return Response(serializer.data)
+
+
+# For Home page
+class GetRecentConfirmedObservationsWithComments(generics.RetrieveAPIView):
+    serializer_class = ObservationAndCommentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        observations = ObservationNormal.objects.all().order_by('-id')[:3]
-        serializer = NormalObservationSerializer(observations, many=True)
 
-        return Response({'obs': serializer.data})
+        try:
+            page_number = self.kwargs['page_number']
+        except:
+            page_number = 1
+
+        observations = Observation.objects.all().filter(obs_is_confirmed=True).order_by('-id')[:10]
+
+        p = Paginator(observations, 10)
+
+        obs_list = p.page(page_number)
+
+        serializer = ObservationAndCommentSerializer(obs_list, many=True)
+
+        return Response({'obs': serializer.data,
+                         'paginator': {
+                             'total_pages': p.num_pages,
+                             'current_page': page_number,
+                             'has_next': obs_list.has_next(),
+                             'has_prev': obs_list.has_previous()
+                         }})
+
+
+# For specialist
+class GetAllUnconfirmedObservationsWithComments(generics.RetrieveAPIView):
+    serializer_class = ObservationAndCommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+
+        try:
+            page_number = self.kwargs['page_number']
+        except:
+            page_number = 1
+
+        observations = Observation.objects.filter(obs_is_confirmed=False).order_by('-id')
+
+        p = Paginator(observations, 10)
+
+        obs_list = p.page(page_number)
+
+        serializer = ObservationAndCommentSerializer(obs_list, many=True)
+
+        return Response({'obs': serializer.data,
+                         'paginator': {
+                             'total_pages': p.num_pages,
+                             'current_page': page_number,
+                             'has_next': obs_list.has_next(),
+                             'has_prev': obs_list.has_previous()
+                         }})
+
+
+# For Personal collection
+class GetAllPersonalObservationsPagination(generics.RetrieveAPIView):
+    serializer_class = ObservationAndCommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+
+        try:
+            page_number = self.kwargs['page_number']
+        except:
+            page_number = 1
+
+        observations = Observation.objects.filter(author_id__exact=user.id).order_by('-id')
+
+        p = Paginator(observations, 10)
+
+        obs_list = p.page(page_number)
+
+        serializer = ObservationAndCommentSerializer(obs_list, many=True)
+
+        return Response({'obs': serializer.data,
+                         'paginator': {
+                             'total_pages': p.num_pages,
+                             'current_page': page_number,
+                             'has_next': obs_list.has_next(),
+                             'has_prev': obs_list.has_previous()
+                         }})
+
+
+# For Search Page
+class GetAllConfirmedObsWithCommentsPagination(generics.RetrieveAPIView):
+    serializer_class = ObservationAndCommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+
+        try:
+            page_number = self.kwargs['page_number']
+        except:
+            page_number = 1
+
+        observations = Observation.objects.all().order_by('-id')
+
+        p = Paginator(observations, 10)
+
+        obs_list = p.page(page_number)
+
+        serializer = ObservationAndCommentSerializer(obs_list, many=True)
+
+        return Response({'obs': serializer.data,
+                         'paginator': {
+                             'total_pages': p.num_pages,
+                             'current_page': page_number,
+                             'has_next': obs_list.has_next(),
+                             'has_prev': obs_list.has_previous()
+                         }})
+
+
+class UpdateUnconfirmedObservation(generics.UpdateAPIView):
+
+    permission_classes = [permissions.IsAdminUser]
+
+    def put(self, request, *args, **kwargs):
+
+        obs_number = self.kwargs['obs_number']
+
+        observation_data = request.POST.copy()
+
+        observation = Observation.objects.filter(pk=obs_number).first()
+
+        observation.bird_name = observation_data['bird_name']
+        observation.obs_is_simple = False
+        observation.obs_is_confirmed = True
+
+        observation.save()
+
+        return Response({"updated": True}, status=200)
+
