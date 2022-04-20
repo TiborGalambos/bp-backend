@@ -151,6 +151,11 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'static', 'media')
 
 MEDIA_URL = '/media/'
 
+
+RECORDING_ROOT = os.path.join(BASE_DIR, 'static', 'recording')
+
+RECORDING_URL = '/recording/'
+
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
     )

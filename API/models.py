@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from django.db import models
 from django.contrib.auth.models import User
 from rest_framework.authtoken.serializers import AuthTokenSerializer
@@ -7,12 +5,10 @@ from knox.views import LoginView as KnoxLoginView
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from knox.models import AuthToken
-
+import datetime
 from django.contrib.auth import login
 from django.views.decorators.debug import sensitive_post_parameters
 from rest_framework.views import APIView
-
-
 
 
 
@@ -25,15 +21,21 @@ class Observation(models.Model):
 
     obs_place = models.CharField(max_length=200, default="Nowhere")
 
-    obs_is_confirmed = models.BooleanField(null=True, default=True)
+    obs_is_confirmed = models.BooleanField(null=True, default=False)
 
-    bird_name = models.CharField(max_length=150)
+    bird_name = models.CharField(max_length=150, default="Neurčený")
     bird_count = models.IntegerField(default=1)
-    obs_time = models.DateTimeField(default=datetime.now(tz=None))
+    obs_time = models.DateField(default=datetime.date.today())
     bird_photo = models.ImageField(null=True, blank=True, upload_to="images/")
+    bird_recording = models.FileField(null=True, blank=True, upload_to="recording/", default=None)
 
-    bird_size = models.CharField(max_length=70, default=None, null=True)
+    bird_size = models.CharField(max_length=150, default=None, null=True)
+    bird_color = models.CharField(max_length=150, default=None, null=True)
+    bird_beak = models.CharField(max_length=150, default=None, null=True)
+
+
     obs_description = models.CharField(max_length=300, default=None, null=True)
+
     obs_is_simple = models.BooleanField(null=True, default=False)
 
     def __int__(self):

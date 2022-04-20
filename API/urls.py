@@ -16,7 +16,8 @@ Including another URLconf
 from .models import *
 from .views import CreateNewNormalObservation, CreateNewSimpleObservation, \
     GetRecentConfirmedObservationsWithComments, GetAllPersonalObservationsPagination, CreateComment, \
-    GetAllConfirmedObsWithCommentsPagination, GetAllUnconfirmedObservationsWithComments, UpdateUnconfirmedObservation
+    GetAllConfirmedObsWithCommentsPagination, GetAllUnconfirmedObservationsWithComments, UpdateUnconfirmedObservation, \
+    GetObsBySpecies, GetSpeciesByYear
 from .stats_views.stats_views import GetGlobalStatisticsMainNumbers, GetGlobalSumOfBirds, GetPersonalSumOfBirds
 from .user_views.user_views import ViewUsers, RegisterUser, LoginUser, WhoAmI, AmIAdmin
 from django.contrib import admin
@@ -44,6 +45,7 @@ urlpatterns = [
     path('observation/unconfirmed/', GetAllUnconfirmedObservationsWithComments.as_view()),
 
 
+
     path('observation/user/<int:page_number>', GetAllPersonalObservationsPagination.as_view(), name='page_number'),
     path('observation/user/', GetAllPersonalObservationsPagination.as_view()),
 
@@ -55,6 +57,10 @@ urlpatterns = [
 
     path('stats/sum/', GetGlobalStatisticsMainNumbers.as_view()),
     path('stats/birds/', GetGlobalSumOfBirds.as_view()),
-    path('stats/sum/personal/', GetPersonalSumOfBirds.as_view())
+    path('stats/sum/personal/', GetPersonalSumOfBirds.as_view()),
+
+
+    path('observation/species/locations/', GetObsBySpecies.as_view()),
+    path('observation/species/occurrence/', GetSpeciesByYear.as_view())
 
 ]

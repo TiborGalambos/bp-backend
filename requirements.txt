@@ -16,3 +16,4 @@ psycopg2-binary
 psycopg2
 knox
 Pillow
+geopy
