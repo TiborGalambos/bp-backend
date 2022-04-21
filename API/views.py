@@ -278,6 +278,27 @@ class GetAllConfirmedObsWithCommentsPagination(generics.RetrieveAPIView):
                          }})
 
 
+class DeleteMyObservation(generics.DestroyAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        body = request.POST.copy
+        obs_number = request.POST['obs_number']
+
+        observation = Observation.objects.filter(pk=obs_number).first()
+        print(request.user)
+        # print(observation.author_id)
+
+        if observation is None:
+            return Response({"deleted": False}, status=404)
+
+        if request.user == observation.author_id:
+            observation.delete()
+            return Response({"deleted": True}, status=201)
+
+        return Response({"deleted": False}, status=401)
+
+
 class UpdateUnconfirmedObservation(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAdminUser]
 
@@ -325,7 +346,6 @@ class GetObsBySpecies(generics.UpdateAPIView):
 
 class GetSpeciesByYear(generics.UpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = ObservationAndCommentSerializer
 
     def put(self, request, *args, **kwargs):
         observation_data = request.POST.copy()
@@ -371,19 +391,19 @@ class GetSpeciesByYear(generics.UpdateAPIView):
         if dec is None:
             dec = 0
 
-        serializer = ObservationSerializer(observations, many=True)
+        # serializer = ObservationSerializer(observations, many=True)
 
         return Response({"year": {
-            "jan": jan,
-            "feb": feb,
-            "mar": mar,
-            "apr": apr,
-            "maj": maj,
-            "jun": jun,
-            "jul": jul,
-            "aug": aug,
-            "sep": sep,
-            "oct": octo,
-            "nov": nov,
-            "dec": dec,
+            "jan": int(jan),
+            "feb": int(feb),
+            "mar": int(mar),
+            "apr": int(apr),
+            "maj": int(maj),
+            "jun": int(jun),
+            "jul": int(jul),
+            "aug": int(aug),
+            "sep": int(sep),
+            "oct": int(octo),
+            "nov": int(nov),
+            "dec": int(dec),
         }})

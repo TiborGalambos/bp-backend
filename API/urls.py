@@ -17,7 +17,7 @@ from .models import *
 from .views import CreateNewNormalObservation, CreateNewSimpleObservation, \
     GetRecentConfirmedObservationsWithComments, GetAllPersonalObservationsPagination, CreateComment, \
     GetAllConfirmedObsWithCommentsPagination, GetAllUnconfirmedObservationsWithComments, UpdateUnconfirmedObservation, \
-    GetObsBySpecies, GetSpeciesByYear
+    GetObsBySpecies, GetSpeciesByYear, DeleteMyObservation
 from .stats_views.stats_views import GetGlobalStatisticsMainNumbers, GetGlobalSumOfBirds, GetPersonalSumOfBirds
 from .user_views.user_views import ViewUsers, RegisterUser, LoginUser, WhoAmI, AmIAdmin
 from django.contrib import admin
@@ -51,6 +51,8 @@ urlpatterns = [
 
 
     path('observation/newcomment/', CreateComment.as_view()),
+    path('observation/delete/', DeleteMyObservation.as_view()),
+
     path('observation/comments/<int:page_number>', GetAllConfirmedObsWithCommentsPagination.as_view(), name='page_number'),
     path('observation/comments/', GetAllConfirmedObsWithCommentsPagination.as_view()),
 
