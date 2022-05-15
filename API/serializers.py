@@ -38,7 +38,6 @@ class LoginSerializer(serializers.Serializer):
 
 # Adding Normal Observations
 class ObservationSerializer(serializers.ModelSerializer):
-
     def get_username(self, obj):
         return obj.author_id.username
 
@@ -49,9 +48,7 @@ class ObservationSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-
 class CommentSerializer(serializers.ModelSerializer):
-
     def get_username(self, obj):
         return obj.author_id.username
 
@@ -61,8 +58,8 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = '__all__'
 
-class ObservationAndCommentSerializer(serializers.ModelSerializer):
 
+class ObservationAndCommentSerializer(serializers.ModelSerializer):
     def get_username(self, obj):
         return obj.author_id.username
 
@@ -76,14 +73,12 @@ class ObservationAndCommentSerializer(serializers.ModelSerializer):
 
 
 class PersonalStatsSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = PersonalStats
         fields = '__all__'
 
 
 class BirdCounterSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = BirdCounter
         fields = '__all__'

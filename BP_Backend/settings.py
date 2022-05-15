@@ -82,13 +82,6 @@ WSGI_APPLICATION = 'BP_Backend.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'postgres',
-    #     'HOST': '127.0.0.1',
-    #     'USER': 'postgres',
-    #     'PASSWORD': 'password',
-    # }
     'default':{
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'postgres',
@@ -96,7 +89,6 @@ DATABASES = {
         'HOST': 'birdithology.postgres.database.azure.com',
         'PASSWORD': '123Tibor123Birdithology123',
         'PORT': '5432',
-        # 'SSLMODE': 'false',
 
     }
 }
@@ -158,7 +150,7 @@ RECORDING_URL = '/recording/'
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
-    )
+)
 
 
 

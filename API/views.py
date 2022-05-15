@@ -22,6 +22,8 @@ def update_global_stats(bird_name, bird_count):
         print("something")
         new_count = int(getattr(exact_bird_first, 'bird_count')) + int(bird_count)
         exact_bird.update(bird_count=new_count)
+        if exact_bird.get().bird_count <= 0:
+            exact_bird.delete()
 
 
 def update_personal_stats(bird_count, user):
@@ -36,6 +38,8 @@ def update_personal_stats(bird_count, user):
         print("something")
         new_count = int(getattr(exact_stat_first, 'obs_count')) + int(bird_count)
         exact_stat.update(obs_count=new_count)
+        if exact_stat.get().obs_count <= 0:
+            exact_stat.delete()
 
 
 def auto_confirm(observation_data):
@@ -193,7 +197,7 @@ class GetRecentConfirmedObservationsWithComments(generics.RetrieveAPIView):
 # For specialist
 class GetAllUnconfirmedObservationsWithComments(generics.RetrieveAPIView):
     serializer_class = ObservationAndCommentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]  # IsAdminUser?
 
     def get(self, request, *args, **kwargs):
 
@@ -261,7 +265,7 @@ class GetAllConfirmedObsWithCommentsPagination(generics.RetrieveAPIView):
         except:
             page_number = 1
 
-        observations = Observation.objects.all().order_by('-id')
+        observations = Observation.objects.all().order_by('-id')  # Filter is confirmed?
 
         p = Paginator(observations, 10)
 
@@ -293,7 +297,11 @@ class DeleteMyObservation(generics.DestroyAPIView):
             return Response({"deleted": False}, status=404)
 
         if request.user == observation.author_id:
+            update_global_stats(observation.bird_name, observation.bird_count*-1)
+            update_personal_stats(observation.bird_count*-1, request.user)
+
             observation.delete()
+
             return Response({"deleted": True}, status=201)
 
         return Response({"deleted": False}, status=401)
@@ -351,7 +359,8 @@ class GetSpeciesByYear(generics.UpdateAPIView):
         observation_data = request.POST.copy()
         species = observation_data['bird_name']
         year = observation_data['year']
-        observations = Observation.objects.filter(bird_name__contains=species, obs_time__year=year).values()
+        observations = Observation.objects.filter(bird_name__contains=species, obs_time__year=year,
+                                                  obs_is_confirmed=True).values()
 
         jan = observations.filter(obs_time__month=1).aggregate(total=Sum('bird_count'))['total']
         feb = observations.filter(obs_time__month=2).aggregate(total=Sum('bird_count'))['total']
